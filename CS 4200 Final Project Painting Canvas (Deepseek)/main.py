@@ -36,6 +36,28 @@ labels_df = full_df.iloc[:, 0].to_frame(name='label')
 # 2. Remaining 784 columns (28x28 pixels)
 pixels_df = full_df.iloc[:, 1:785]
 
+
+
+def downsize_data(df: pd.DataFrame, n: int) -> pd.DataFrame:
+    """
+    Downsamples a DataFrame by selecting every n-th row.
+
+    Parameters:
+    - df (pd.DataFrame): Input DataFrame to downsample.
+    - n (int): Step size for downsampling (e.g., n=2 returns every other row).
+
+    Returns:
+    - pd.DataFrame: Downsampled DataFrame.
+    """
+    if n <= 0:
+        raise ValueError("n must be a positive integer")
+    return df.iloc[::n, :].reset_index(drop=True)
+
+
+
+labels_df = downsize_data(labels_df, 4)
+pixels_df = downsize_data(pixels_df, 4)
+
 # Convert the DataFrames to NumPy arrays
 labels = labels_df['label'].values  # Shape: (num_samples,)
 pixels = pixels_df.values  # Shape: (num_samples, 784)
@@ -46,22 +68,21 @@ images = pixels.reshape(-1, 28, 28, 1).astype('float32')
 # Normalize pixel values to [0, 1] (optional but recommended)
 images /= 255.0
 
-# Now you can feed (images, labels) directly into Keras:
 print("Images shape:", images.shape)  # Should be (num_samples, 28, 28, 1)
 print("Labels shape:", labels.shape)  # Should be (num_samples,)
 
-# Verify the shapes
-print("\nShapes:")
-print(f"Full dataset: {full_df.shape}")
-print(f"Labels DataFrame: {labels_df.shape}")
-print(f"Pixels DataFrame: {pixels_df.shape}")
 
-# Show some samples
-print("\nFirst few labels:")
-print(labels_df.head())
+# # Verify the shapes
+# print("\nShapes:")
+# print(f"Full dataset: {full_df.shape}")
+# print(f"Labels DataFrame: {labels_df.shape}")
+# print(f"Pixels DataFrame: {pixels_df.shape}")
 
-print("\nFirst few pixel values (first 5 columns):")
-print(pixels_df.iloc[:, :5].head())
+# print("\nFirst few labels:")
+# print(labels_df.head())
+#
+# print("\nFirst few pixel values (first 5 columns):")
+# print(pixels_df.iloc[:, :5].head())
 
 
 # def reshapeImage(dataframe, index):
@@ -123,20 +144,19 @@ model = tf.keras.Sequential([
     tf.keras.layers.MaxPooling2D((2, 2)),
     tf.keras.layers.Conv2D(128, (3, 3), activation='relu'),
     tf.keras.layers.MaxPooling2D((2, 2)),
+    tf.keras.layers.Conv2D(128, (3, 3), activation='relu'),
     tf.keras.layers.Flatten(),
     tf.keras.layers.Dense(64, activation='relu'),
     tf.keras.layers.Dense(26, activation='softmax')
 ])
 
-model.compile(optimizer='adam', loss='sparse_categorical_crossentropy',
-              metrics=[
-                  tf.keras.metrics.SparseCategoricalAccuracy(name='Accuracy'),
-              ])
+model.compile(optimizer='adam', loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=False),
+              metrics=['accuracy'])
 
 # =================================================================
 # Feed the initial data to the model
 
-model.fit(images, labels, epochs=3, validation_split=0.2)
+model.fit(images, labels, epochs=3, validation_split=0.1)
 probability_model = tf.keras.Sequential([model])
 
 # ===================================================================================
@@ -217,15 +237,16 @@ while running:
                 # Save the image
                 import matplotlib.pyplot as plt
 
-                plt.imsave('drawing.png', test_image, cmap='gray')
-                print("Image saved as drawing.png")
+                # plt.imsave('drawing.png', test_image, cmap='gray')
+                # print("Image saved as drawing.png")
                 print("Pixel data stored in test_image array:")
                 test_image = test_image.reshape(-1, 28, 28, 1).astype('float32')
 
                 testing_result = probability_model.predict(test_image)[0]
                 print("Model predicts image is: " + "\"" + chr(
                     np.argmax(testing_result) + 65) + "\"" + "\n\tConfidence: " + str(
-                    np.max(testing_result)) + "\n")
+                    testing_result[np.argmax(testing_result)]) + "\n")
+                print(testing_result)
 
             # Check if clicked on clear button
             elif clear_button_rect.collidepoint(event.pos):
