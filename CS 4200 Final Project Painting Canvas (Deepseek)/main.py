@@ -121,8 +121,10 @@ model = tf.keras.Sequential([
     tf.keras.layers.Input(shape=(28, 28, 1)),
     tf.keras.layers.Conv2D(32, (3, 3), activation='relu'),
     tf.keras.layers.MaxPooling2D((2, 2)),
+    tf.keras.layers.Conv2D(128, (3, 3), activation='relu'),
+    tf.keras.layers.MaxPooling2D((2, 2)),
     tf.keras.layers.Flatten(),
-    tf.keras.layers.Dense(128, activation='relu'),
+    tf.keras.layers.Dense(64, activation='relu'),
     tf.keras.layers.Dense(26, activation='softmax')
 ])
 
@@ -135,8 +137,7 @@ model.compile(optimizer='adam', loss='sparse_categorical_crossentropy',
 # Feed the initial data to the model
 
 model.fit(images, labels, epochs=3, validation_split=0.2)
-#
-# loss, precision = model.evaluate(pixels_df, labels_df, verbose = 2)
+probability_model = tf.keras.Sequential([model])
 
 # ===================================================================================
 # Simple Drawing Program for Generating PNG Images
@@ -145,7 +146,7 @@ model.fit(images, labels, epochs=3, validation_split=0.2)
 pygame.init()
 
 # Constants
-WINDOW_SIZE = (560, 630)  # 20x magnification for 28x28 grid plus space for button
+WINDOW_SIZE = (560, 690)  # Increased height to accommodate both buttons
 GRID_SIZE = 28
 CELL_SIZE = 20
 WHITE = (255, 255, 255)
@@ -166,10 +167,17 @@ drawing_area.fill(BLACK)
 image_data = np.zeros((GRID_SIZE, GRID_SIZE), dtype=np.uint8)
 test_image = None  # This will store the pixel data when saved
 
-# Button rectangle
-button_rect = pygame.Rect(
+# Button rectangles
+save_button_rect = pygame.Rect(
     WINDOW_SIZE[0] // 2 - 100,
-    GRID_SIZE * CELL_SIZE + 30,
+    GRID_SIZE * CELL_SIZE + 20,
+    200,
+    50
+)
+
+clear_button_rect = pygame.Rect(
+    WINDOW_SIZE[0] // 2 - 100,
+    GRID_SIZE * CELL_SIZE + 90,
     200,
     50
 )
@@ -202,7 +210,7 @@ while running:
                         (grid_x * CELL_SIZE, grid_y * CELL_SIZE, CELL_SIZE, CELL_SIZE)
                     )
             # Check if clicked on save button
-            elif button_rect.collidepoint(event.pos):
+            elif save_button_rect.collidepoint(event.pos):
                 # Store the pixel data in test_image
                 test_image = image_data.copy()
 
@@ -212,10 +220,18 @@ while running:
                 plt.imsave('drawing.png', test_image, cmap='gray')
                 print("Image saved as drawing.png")
                 print("Pixel data stored in test_image array:")
-                # print(test_image)
+                test_image = test_image.reshape(-1, 28, 28, 1).astype('float32')
 
+                testing_result = probability_model.predict(test_image)[0]
+                print("Model predicts image is: " + "\"" + chr(
+                    np.argmax(testing_result) + 65) + "\"" + "\n\tConfidence: " + str(
+                    np.max(testing_result)) + "\n")
 
-
+            # Check if clicked on clear button
+            elif clear_button_rect.collidepoint(event.pos):
+                # Clear the drawing area and image data
+                drawing_area.fill(BLACK)
+                image_data.fill(0)
 
         # Handle mouse button up
         elif event.type == MOUSEBUTTONUP:
@@ -262,13 +278,21 @@ while running:
     screen.blit(drawing_area, (0, 0))
 
     # Draw the save button
-    button_color = BUTTON_HOVER if button_rect.collidepoint(pygame.mouse.get_pos()) else BUTTON_COLOR
-    pygame.draw.rect(screen, button_color, button_rect, border_radius=5)
+    save_button_color = BUTTON_HOVER if save_button_rect.collidepoint(pygame.mouse.get_pos()) else BUTTON_COLOR
+    pygame.draw.rect(screen, save_button_color, save_button_rect, border_radius=5)
 
-    # Draw the button text
-    text_surface = font.render("Save Image", True, WHITE)
-    text_rect = text_surface.get_rect(center=button_rect.center)
-    screen.blit(text_surface, text_rect)
+    # Draw the clear button
+    clear_button_color = BUTTON_HOVER if clear_button_rect.collidepoint(pygame.mouse.get_pos()) else BUTTON_COLOR
+    pygame.draw.rect(screen, clear_button_color, clear_button_rect, border_radius=5)
+
+    # Draw the button texts
+    save_text = font.render("Feed Model", True, WHITE)
+    save_text_rect = save_text.get_rect(center=save_button_rect.center)
+    screen.blit(save_text, save_text_rect)
+
+    clear_text = font.render("Clear Canvas", True, WHITE)
+    clear_text_rect = clear_text.get_rect(center=clear_button_rect.center)
+    screen.blit(clear_text, clear_text_rect)
 
     # Update the display
     pygame.display.flip()
