@@ -6,7 +6,7 @@ import kagglehub
 import pandas as pd
 import matplotlib.pyplot as plt
 import random
-
+import tensorflow as tf
 
 # Download the dataset
 path = kagglehub.dataset_download("sachinpatel21/az-handwritten-alphabets-in-csv-format")
@@ -36,6 +36,20 @@ labels_df = full_df.iloc[:, 0].to_frame(name='label')
 # 2. Remaining 784 columns (28x28 pixels)
 pixels_df = full_df.iloc[:, 1:785]
 
+# Convert the DataFrames to NumPy arrays
+labels = labels_df['label'].values  # Shape: (num_samples,)
+pixels = pixels_df.values  # Shape: (num_samples, 784)
+
+# Reshape pixels to (num_samples, 28, 28, 1) for Keras
+images = pixels.reshape(-1, 28, 28, 1).astype('float32')
+
+# Normalize pixel values to [0, 1] (optional but recommended)
+images /= 255.0
+
+# Now you can feed (images, labels) directly into Keras:
+print("Images shape:", images.shape)  # Should be (num_samples, 28, 28, 1)
+print("Labels shape:", labels.shape)  # Should be (num_samples,)
+
 # Verify the shapes
 print("\nShapes:")
 print(f"Full dataset: {full_df.shape}")
@@ -50,82 +64,82 @@ print("\nFirst few pixel values (first 5 columns):")
 print(pixels_df.iloc[:, :5].head())
 
 
+# def reshapeImage(dataframe, index):
+#     sample_image = pixels_df_scaled.iloc[index].values.reshape(28, 28)  # Reshape to 28x28
+#     return sample_image
 
 
-
-
-
-# Scale down pixel values
-# Resultant values are between 0 : 1
-pixels_df_scaled = pixels_df / 255.0
-print("\nPixel integer values scaled down and saved to \"pixels_df_scaled\" ")
-
-def reshapeImage(dataframe, index):
-  sample_image = pixels_df_scaled.iloc[index].values.reshape(28, 28)  # Reshape to 28x28
-  return sample_image
-
-def printImageAtIndex(index):
-  charNum = int(labels_df.iloc[index,0])
-  sample_image = reshapeImage(pixels_df_scaled, index)
-  plt.imshow(sample_image, cmap='gray')
-  plt.title(chr(charNum+ord("A")))
-  plt.colorbar()
-  plt.grid(False)
-  plt.show()
+# def printImageAtIndex(index):
+#     charNum = int(labels_df.iloc[index, 0])
+#     sample_image = reshapeImage(pixels_df_scaled, index)
+#     plt.imshow(sample_image, cmap='gray')
+#     plt.title(chr(charNum + ord("A")))
+#     plt.colorbar()
+#     plt.grid(False)
+#     plt.show()
 
 
 def labelToChar(index):
-  charNum = int(labels_df.iloc[index,0])
-  return chr(charNum + ord("A"))
+    charNum = int(labels_df.iloc[index, 0])
+    return chr(charNum + ord("A"))
 
 
 def labelToInt(index):
-  charNum = int(labels_df.iloc[index,0])
-  return charNum
+    charNum = int(labels_df.iloc[index, 0])
+    return charNum
+
 
 def countInstances(character):
-  count = 0;
+    count = 0;
 
-  for row in range(len(labels_df)):
-    if labelToChar(row) == character:
-      count += 1
+    for row in range(len(labels_df)):
+        if labelToChar(row) == character:
+            count += 1
 
-  return count;
+    return count;
 
 
 def getInstancesTable():
-  firstRow = {'Letter' : ["A"], 'Count' : [countInstances('A')]}
-  returnDF = pd.DataFrame(firstRow)
-  for i in range(1,26):
-    nextRow = {'Letter' : [chr(i+ord("A"))], 'Count' : [countInstances(chr(i+ord("A")))]}
-    returnDF = pd.concat([returnDF, pd.DataFrame(nextRow)], ignore_index=True)
-  return returnDF
+    firstRow = {'Letter': ["A"], 'Count': [countInstances('A')]}
+    returnDF = pd.DataFrame(firstRow)
+    for i in range(1, 26):
+        nextRow = {'Letter': [chr(i + ord("A"))], 'Count': [countInstances(chr(i + ord("A")))]}
+        returnDF = pd.concat([returnDF, pd.DataFrame(nextRow)], ignore_index=True)
+    return returnDF
 
 
-
-#=================================================================
-#Testing useful functions
-#print(getInstancesTable())
-
+# =================================================================
+# Testing useful functions
+# print(getInstancesTable())
 
 
+# =================================================================
+# Start building the model
 
 
+model = tf.keras.Sequential([
+    tf.keras.layers.Input(shape=(28, 28, 1)),
+    tf.keras.layers.Conv2D(32, (3, 3), activation='relu'),
+    tf.keras.layers.MaxPooling2D((2, 2)),
+    tf.keras.layers.Flatten(),
+    tf.keras.layers.Dense(128, activation='relu'),
+    tf.keras.layers.Dense(26, activation='softmax')
+])
 
+model.compile(optimizer='adam', loss='sparse_categorical_crossentropy',
+              metrics=[
+                  tf.keras.metrics.SparseCategoricalAccuracy(name='Accuracy'),
+              ])
 
+# =================================================================
+# Feed the initial data to the model
 
+model.fit(images, labels, epochs=3, validation_split=0.2)
+#
+# loss, precision = model.evaluate(pixels_df, labels_df, verbose = 2)
 
-
-
-
-
-
-
-
-
-
-#===================================================================================
-#Simple Drawing Program for Generating PNG Images
+# ===================================================================================
+# Simple Drawing Program for Generating PNG Images
 # Initialize pygame
 # Initialize pygame
 pygame.init()
@@ -198,7 +212,10 @@ while running:
                 plt.imsave('drawing.png', test_image, cmap='gray')
                 print("Image saved as drawing.png")
                 print("Pixel data stored in test_image array:")
-                print(test_image)
+                # print(test_image)
+
+
+
 
         # Handle mouse button up
         elif event.type == MOUSEBUTTONUP:
