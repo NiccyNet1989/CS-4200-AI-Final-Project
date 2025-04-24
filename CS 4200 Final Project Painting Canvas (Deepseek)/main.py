@@ -8,9 +8,12 @@ import matplotlib.pyplot as plt
 import random
 
 import os
+
 os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 import tensorflow as tf
 import keras
+
+from sklearn.utils import resample
 
 # Download the dataset
 path = kagglehub.dataset_download("sachinpatel21/az-handwritten-alphabets-in-csv-format")
@@ -40,6 +43,7 @@ labels_df = full_df.iloc[:, 0].to_frame(name='label')
 # 2. Remaining 784 columns (28x28 pixels)
 pixels_df = full_df.iloc[:, 1:785]
 
+print("\nFull dataframe : " + str(full_df.shape))
 
 def downsize_data(df: pd.DataFrame, n: int) -> pd.DataFrame:
     if n <= 0:
@@ -47,8 +51,11 @@ def downsize_data(df: pd.DataFrame, n: int) -> pd.DataFrame:
     return df.iloc[::n, :].reset_index(drop=True)
 
 
-labels_df = downsize_data(labels_df, 3)
-pixels_df = downsize_data(pixels_df, 3)
+lables_downsized = downsize_data(labels_df, 20)
+pixels_downsized = downsize_data(pixels_df, 20)
+
+lables_downsized = lables_downsized['label'].values
+pixels_downsized = pixels_downsized.values
 
 # Convert the DataFrames to NumPy arrays
 labels = labels_df['label'].values  # Shape: (num_samples,)
@@ -56,18 +63,34 @@ pixels = pixels_df.values  # Shape: (num_samples, 784)
 
 # Reshape pixels to (num_samples, 28, 28, 1) for Keras
 images = pixels.reshape(-1, 28, 28, 1).astype('float32')
+images_downsized = pixels_downsized.reshape(-1, 28, 28, 1).astype('float32')
 
 # Normalize pixel values to [0, 1] (optional but recommended)
 images /= 255.0
 
-print("Images shape:", images.shape)  # Should be (num_samples, 28, 28, 1)
-print("Labels shape:", labels.shape)  # Should be (num_samples,)
-
+print("\nDataframe downsized, Labels = " + str(lables_downsized.shape))
+print("Dataframe downsized, Images = " + str(images_downsized.shape) + "\n")
 
 # =================================================================
 # Attempting to create balanced dataset
 
-balanced_df = full_df.groupby('value').apply(lambda x: x.sample(4000,replace = True)).reset_index(drop = True)
+labels_balanced = []
+images_balanced = []
+
+classes, counts = np.unique(labels, return_counts=True)
+lowest_count = np.min(counts)
+
+for letter in classes:
+    class_data = images[labels == letter]
+    class_data_sample = resample(class_data, replace=False, n_samples=lowest_count)
+    images_balanced.append(class_data_sample)
+    labels_balanced.extend([letter] * lowest_count)
+
+images_balanced = np.concatenate(images_balanced)
+labels_balanced = np.array(labels_balanced)
+
+print("Balanced Labels = " + str(labels_balanced.shape))
+print("Balanced Images = " + str(images_balanced.shape))
 
 
 # =================================================================
@@ -80,7 +103,6 @@ def largeIndent():
         "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
         "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
         "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
-
 
 
 # =================================================================
@@ -102,7 +124,10 @@ model = tf.keras.Sequential([
 model.compile(optimizer='adam', loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=False),
               metrics=['accuracy'])
 
-model.fit(images, labels, epochs=3, validation_split=0.1)
+# model.fit(images, labels, epochs=3, validation_split=0.1)
+# model.fit(images_downsized, lables_downsized, epochs=5, validation_split=0.1)
+model.fit(images_balanced, labels_balanced, epochs=10, validation_split=0.1)
+
 probability_model = tf.keras.Sequential([model])
 
 # ===================================================================================
@@ -193,7 +218,9 @@ while running:
                 print("\nModel predicts image is: " + "\"" + chr(
                     np.argmax(testing_result) + 65) + "\"" + "\n\tConfidence: " + str(
                     testing_result[np.argmax(testing_result)]) + "\n")
-                print(testing_result)
+
+                for letter_index in range(26):
+                    print(str(chr(letter_index + 65)) + " : " + str((testing_result[letter_index] * 100)) + "%")
 
             # Check if clicked on clear button
             elif clear_button_rect.collidepoint(event.pos):
@@ -266,13 +293,6 @@ while running:
     pygame.display.flip()
 
 pygame.quit()
-
-
-
-
-
-
-
 
 # =================================================================
 # Possible functions to use
