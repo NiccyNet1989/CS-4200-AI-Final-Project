@@ -6,7 +6,11 @@ import kagglehub
 import pandas as pd
 import matplotlib.pyplot as plt
 import random
+
+import os
+os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 import tensorflow as tf
+import keras
 
 # Download the dataset
 path = kagglehub.dataset_download("sachinpatel21/az-handwritten-alphabets-in-csv-format")
@@ -37,26 +41,14 @@ labels_df = full_df.iloc[:, 0].to_frame(name='label')
 pixels_df = full_df.iloc[:, 1:785]
 
 
-
 def downsize_data(df: pd.DataFrame, n: int) -> pd.DataFrame:
-    """
-    Downsamples a DataFrame by selecting every n-th row.
-
-    Parameters:
-    - df (pd.DataFrame): Input DataFrame to downsample.
-    - n (int): Step size for downsampling (e.g., n=2 returns every other row).
-
-    Returns:
-    - pd.DataFrame: Downsampled DataFrame.
-    """
     if n <= 0:
         raise ValueError("n must be a positive integer")
     return df.iloc[::n, :].reset_index(drop=True)
 
 
-
-labels_df = downsize_data(labels_df, 4)
-pixels_df = downsize_data(pixels_df, 4)
+labels_df = downsize_data(labels_df, 3)
+pixels_df = downsize_data(pixels_df, 3)
 
 # Convert the DataFrames to NumPy arrays
 labels = labels_df['label'].values  # Shape: (num_samples,)
@@ -72,70 +64,27 @@ print("Images shape:", images.shape)  # Should be (num_samples, 28, 28, 1)
 print("Labels shape:", labels.shape)  # Should be (num_samples,)
 
 
-# # Verify the shapes
-# print("\nShapes:")
-# print(f"Full dataset: {full_df.shape}")
-# print(f"Labels DataFrame: {labels_df.shape}")
-# print(f"Pixels DataFrame: {pixels_df.shape}")
+# =================================================================
+# Attempting to create balanced dataset
 
-# print("\nFirst few labels:")
-# print(labels_df.head())
-#
-# print("\nFirst few pixel values (first 5 columns):")
-# print(pixels_df.iloc[:, :5].head())
-
-
-# def reshapeImage(dataframe, index):
-#     sample_image = pixels_df_scaled.iloc[index].values.reshape(28, 28)  # Reshape to 28x28
-#     return sample_image
-
-
-# def printImageAtIndex(index):
-#     charNum = int(labels_df.iloc[index, 0])
-#     sample_image = reshapeImage(pixels_df_scaled, index)
-#     plt.imshow(sample_image, cmap='gray')
-#     plt.title(chr(charNum + ord("A")))
-#     plt.colorbar()
-#     plt.grid(False)
-#     plt.show()
-
-
-def labelToChar(index):
-    charNum = int(labels_df.iloc[index, 0])
-    return chr(charNum + ord("A"))
-
-
-def labelToInt(index):
-    charNum = int(labels_df.iloc[index, 0])
-    return charNum
-
-
-def countInstances(character):
-    count = 0;
-
-    for row in range(len(labels_df)):
-        if labelToChar(row) == character:
-            count += 1
-
-    return count;
-
-
-def getInstancesTable():
-    firstRow = {'Letter': ["A"], 'Count': [countInstances('A')]}
-    returnDF = pd.DataFrame(firstRow)
-    for i in range(1, 26):
-        nextRow = {'Letter': [chr(i + ord("A"))], 'Count': [countInstances(chr(i + ord("A")))]}
-        returnDF = pd.concat([returnDF, pd.DataFrame(nextRow)], ignore_index=True)
-    return returnDF
+balanced_df = full_df.groupby('value').apply(lambda x: x.sample(4000,replace = True)).reset_index(drop = True)
 
 
 # =================================================================
-# Testing useful functions
-# print(getInstancesTable())
+def largeIndent():
+    print(
+        "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
+        "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
+        "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
+        "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
+        "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
+        "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
+        "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
+
 
 
 # =================================================================
-# Start building the model
+# Start building the model and feeding it data
 
 
 model = tf.keras.Sequential([
@@ -152,9 +101,6 @@ model = tf.keras.Sequential([
 
 model.compile(optimizer='adam', loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=False),
               metrics=['accuracy'])
-
-# =================================================================
-# Feed the initial data to the model
 
 model.fit(images, labels, epochs=3, validation_split=0.1)
 probability_model = tf.keras.Sequential([model])
@@ -239,11 +185,12 @@ while running:
 
                 # plt.imsave('drawing.png', test_image, cmap='gray')
                 # print("Image saved as drawing.png")
+                largeIndent()
                 print("Pixel data stored in test_image array:")
                 test_image = test_image.reshape(-1, 28, 28, 1).astype('float32')
 
                 testing_result = probability_model.predict(test_image)[0]
-                print("Model predicts image is: " + "\"" + chr(
+                print("\nModel predicts image is: " + "\"" + chr(
                     np.argmax(testing_result) + 65) + "\"" + "\n\tConfidence: " + str(
                     testing_result[np.argmax(testing_result)]) + "\n")
                 print(testing_result)
@@ -319,3 +266,71 @@ while running:
     pygame.display.flip()
 
 pygame.quit()
+
+
+
+
+
+
+
+
+# =================================================================
+# Possible functions to use
+# print(getInstancesTable())
+
+# # Verify the shapes
+# print("\nShapes:")
+# print(f"Full dataset: {full_df.shape}")
+# print(f"Labels DataFrame: {labels_df.shape}")
+# print(f"Pixels DataFrame: {pixels_df.shape}")
+
+# print("\nFirst few labels:")
+# print(labels_df.head())
+#
+# print("\nFirst few pixel values (first 5 columns):")
+# print(pixels_df.iloc[:, :5].head())
+
+
+# def reshapeImage(dataframe, index):
+#     sample_image = pixels_df_scaled.iloc[index].values.reshape(28, 28)  # Reshape to 28x28
+#     return sample_image
+
+
+# def printImageAtIndex(index):
+#     charNum = int(labels_df.iloc[index, 0])
+#     sample_image = reshapeImage(pixels_df_scaled, index)
+#     plt.imshow(sample_image, cmap='gray')
+#     plt.title(chr(charNum + ord("A")))
+#     plt.colorbar()
+#     plt.grid(False)
+#     plt.show()
+#
+#
+#
+# def labelToChar(index):
+#     charNum = int(labels_df.iloc[index, 0])
+#     return chr(charNum + ord("A"))
+#
+#
+# def labelToInt(index):
+#     charNum = int(labels_df.iloc[index, 0])
+#     return charNum
+#
+#
+# def countInstances(character):
+#     count = 0;
+#
+#     for row in range(len(labels_df)):
+#         if labelToChar(row) == character:
+#             count += 1
+#
+#     return count;
+#
+#
+# def getInstancesTable():
+#     firstRow = {'Letter': ["A"], 'Count': [countInstances('A')]}
+#     returnDF = pd.DataFrame(firstRow)
+#     for i in range(1, 26):
+#         nextRow = {'Letter': [chr(i + ord("A"))], 'Count': [countInstances(chr(i + ord("A")))]}
+#         returnDF = pd.concat([returnDF, pd.DataFrame(nextRow)], ignore_index=True)
+#     return returnDF
