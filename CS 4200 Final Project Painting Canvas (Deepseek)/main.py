@@ -107,8 +107,29 @@ for i in range(25):
     plt.xlabel(str(selectedIndex) + ", " + chr(int(labels_df.iloc[selectedIndex, 0]) + ord("A")))
 plt.show()
 
-# Demonstrating the class imbalance of the original dataframe
 
+# Demonstrating the class imbalance of the original dataframe
+def countInstances(character):
+    count = 0;
+
+    for row in range(len(labels_df)):
+        if labelToChar(row) == character:
+            count += 1
+
+    return count;
+
+
+def get_instances_array():
+    return_array = [0] * 26
+    for index in range(0, len(labels_df)):
+        return_array[int(labels_df.iloc[index, 0])] = return_array[int(labels_df.iloc[index, 0])] + 1
+    return return_array
+
+
+instances_count = np.array(get_instances_array())
+instances_label = ['A', 'B', 'C', 'D', 'E', 'F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z']
+plt.bar(instances_label, instances_count)
+plt.show()
 
 # =================================================================
 # Attempting to create balanced dataset
