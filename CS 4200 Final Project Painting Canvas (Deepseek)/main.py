@@ -133,7 +133,6 @@ probability_model = tf.keras.Sequential([model])
 # ===================================================================================
 # Simple Drawing Program for Generating PNG Images
 # Initialize pygame
-# Initialize pygame
 pygame.init()
 
 # Constants
