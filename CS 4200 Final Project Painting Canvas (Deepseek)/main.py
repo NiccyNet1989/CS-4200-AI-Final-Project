@@ -1,17 +1,16 @@
-import pygame
-import numpy as np
-from pygame.locals import *
 import os
-import kagglehub
-import pandas as pd
-import matplotlib.pyplot as plt
 import random
 
-import os
+import kagglehub
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import pygame
+from pygame.locals import *
+import keras
 
 os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 import tensorflow as tf
-import keras
 
 from sklearn.utils import resample
 
@@ -45,6 +44,7 @@ pixels_df = full_df.iloc[:, 1:785]
 
 print("\nFull dataframe : " + str(full_df.shape))
 
+
 def downsize_data(df: pd.DataFrame, n: int) -> pd.DataFrame:
     if n <= 0:
         raise ValueError("n must be a positive integer")
@@ -72,6 +72,45 @@ print("\nDataframe downsized, Labels = " + str(lables_downsized.shape))
 print("Dataframe downsized, Images = " + str(images_downsized.shape) + "\n")
 
 # =================================================================
+# Printing random entries from the full dataframe
+pixels_scaled = pixels_df / 255.0
+
+
+def reshapeImage(dataframe, index):
+    sample_image = dataframe.iloc[index].values.reshape(28, 28)  # Reshape to 28x28
+    return sample_image
+
+
+def printImageAtIndex(index):
+    charNum = int(labels_df.iloc[index, 0])
+    sample_image = reshapeImage(pixels_scaled, index)
+    plt.imshow(sample_image, cmap='gray')
+    plt.title(chr(charNum + ord("A")))
+    plt.colorbar()
+    plt.grid(False)
+    plt.show()
+
+
+def labelToChar(index):
+    charNum = int(labels_df.iloc[index, 0])
+    return chr(charNum + ord("A"))
+
+
+plt.figure(figsize=(10, 10))
+for i in range(25):
+    selectedIndex = random.randint(0, len(labels_df) - 1)
+    plt.subplot(5, 5, i + 1)
+    plt.xticks([])
+    plt.yticks([])
+    plt.grid(False)
+    plt.imshow(reshapeImage(pixels_scaled, selectedIndex), cmap=plt.cm.binary)
+    plt.xlabel(str(selectedIndex) + ", " + chr(int(labels_df.iloc[selectedIndex, 0]) + ord("A")))
+plt.show()
+
+# Demonstrating the class imbalance of the original dataframe
+
+
+# =================================================================
 # Attempting to create balanced dataset
 
 labels_balanced = []
@@ -91,19 +130,6 @@ labels_balanced = np.array(labels_balanced)
 
 print("Balanced Labels = " + str(labels_balanced.shape))
 print("Balanced Images = " + str(images_balanced.shape))
-
-
-# =================================================================
-def largeIndent():
-    print(
-        "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
-        "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
-        "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
-        "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
-        "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
-        "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
-        "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
-
 
 # =================================================================
 # Start building the model and feeding it data
@@ -130,7 +156,19 @@ model.fit(images_balanced, labels_balanced, epochs=10, validation_split=0.1)
 
 probability_model = tf.keras.Sequential([model])
 
+
 # ===================================================================================
+def largeIndent():
+    print(
+        "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
+        "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
+        "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
+        "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
+        "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
+        "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
+        "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
+
+
 # Simple Drawing Program for Generating PNG Images
 # Initialize pygame
 pygame.init()
