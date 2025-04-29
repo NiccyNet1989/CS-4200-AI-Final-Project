@@ -97,15 +97,20 @@ def labelToChar(index):
 
 
 plt.figure(figsize=(10, 10))
-for i in range(25):
-    selectedIndex = random.randint(0, len(labels_df) - 1)
-    plt.subplot(5, 5, i + 1)
-    plt.xticks([])
-    plt.yticks([])
-    plt.grid(False)
-    plt.imshow(reshapeImage(pixels_scaled, selectedIndex), cmap=plt.cm.binary)
-    plt.xlabel(str(selectedIndex) + ", " + chr(int(labels_df.iloc[selectedIndex, 0]) + ord("A")))
-plt.show()
+def plot_random_entries():
+    for i in range(25):
+        selectedIndex = random.randint(0, len(labels_df) - 1)
+        plt.subplot(5, 5, i + 1)
+        plt.xticks([])
+        plt.yticks([])
+        plt.grid(False)
+        plt.imshow(reshapeImage(pixels_scaled, selectedIndex), cmap=plt.cm.binary)
+        plt.xlabel(str(selectedIndex) + ", " + chr(int(labels_df.iloc[selectedIndex, 0]) + ord("A")))
+    plt.show()
+
+plot_random_entries()
+plot_random_entries()
+plot_random_entries()
 
 
 # Demonstrating the class imbalance of the original dataframe
