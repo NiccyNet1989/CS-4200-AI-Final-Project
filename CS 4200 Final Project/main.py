@@ -97,6 +97,8 @@ def labelToChar(index):
 
 
 plt.figure(figsize=(10, 10))
+
+
 def plot_random_entries():
     for i in range(25):
         selectedIndex = random.randint(0, len(labels_df) - 1)
@@ -107,6 +109,7 @@ def plot_random_entries():
         plt.imshow(reshapeImage(pixels_scaled, selectedIndex), cmap=plt.cm.binary)
         plt.xlabel(str(selectedIndex) + ", " + chr(int(labels_df.iloc[selectedIndex, 0]) + ord("A")))
     plt.show()
+
 
 plot_random_entries()
 plot_random_entries()
@@ -132,7 +135,8 @@ def get_instances_array():
 
 
 instances_count = np.array(get_instances_array())
-instances_label = ['A', 'B', 'C', 'D', 'E', 'F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z']
+instances_label = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T',
+                   'U', 'V', 'W', 'X', 'Y', 'Z']
 plt.bar(instances_label, instances_count)
 plt.show()
 
@@ -276,6 +280,7 @@ while running:
                 largeIndent()
                 print("Pixel data stored in test_image array:")
                 test_image = test_image.reshape(-1, 28, 28, 1).astype('float32')
+                test_image = test_image / 255
 
                 testing_result = probability_model.predict(test_image)[0]
                 print("\nModel predicts image is: " + "\"" + chr(
@@ -356,64 +361,3 @@ while running:
     pygame.display.flip()
 
 pygame.quit()
-
-# =================================================================
-# Possible functions to use
-# print(getInstancesTable())
-
-# # Verify the shapes
-# print("\nShapes:")
-# print(f"Full dataset: {full_df.shape}")
-# print(f"Labels DataFrame: {labels_df.shape}")
-# print(f"Pixels DataFrame: {pixels_df.shape}")
-
-# print("\nFirst few labels:")
-# print(labels_df.head())
-#
-# print("\nFirst few pixel values (first 5 columns):")
-# print(pixels_df.iloc[:, :5].head())
-
-
-# def reshapeImage(dataframe, index):
-#     sample_image = pixels_df_scaled.iloc[index].values.reshape(28, 28)  # Reshape to 28x28
-#     return sample_image
-
-
-# def printImageAtIndex(index):
-#     charNum = int(labels_df.iloc[index, 0])
-#     sample_image = reshapeImage(pixels_df_scaled, index)
-#     plt.imshow(sample_image, cmap='gray')
-#     plt.title(chr(charNum + ord("A")))
-#     plt.colorbar()
-#     plt.grid(False)
-#     plt.show()
-#
-#
-#
-# def labelToChar(index):
-#     charNum = int(labels_df.iloc[index, 0])
-#     return chr(charNum + ord("A"))
-#
-#
-# def labelToInt(index):
-#     charNum = int(labels_df.iloc[index, 0])
-#     return charNum
-#
-#
-# def countInstances(character):
-#     count = 0;
-#
-#     for row in range(len(labels_df)):
-#         if labelToChar(row) == character:
-#             count += 1
-#
-#     return count;
-#
-#
-# def getInstancesTable():
-#     firstRow = {'Letter': ["A"], 'Count': [countInstances('A')]}
-#     returnDF = pd.DataFrame(firstRow)
-#     for i in range(1, 26):
-#         nextRow = {'Letter': [chr(i + ord("A"))], 'Count': [countInstances(chr(i + ord("A")))]}
-#         returnDF = pd.concat([returnDF, pd.DataFrame(nextRow)], ignore_index=True)
-#     return returnDF
